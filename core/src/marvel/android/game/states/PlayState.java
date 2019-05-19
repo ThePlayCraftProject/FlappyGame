@@ -22,6 +22,7 @@ public class PlayState extends State {
     private Texture background;
     private Texture surface;
     private Vector2 surfacePos1, surfacePos2;
+    private float backgroundPos1, backgroundPos2;
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
@@ -29,6 +30,8 @@ public class PlayState extends State {
         surface = new Texture("ground.png");
         surfacePos1 = new Vector2(camera.position.x - camera.viewportWidth/2, GROUND_Y_OFFSET);
         surfacePos2 = new Vector2(camera.position.x - camera.viewportWidth/2 + surface.getWidth(), GROUND_Y_OFFSET);
+        backgroundPos1 = camera.position.x - camera.viewportWidth/2;
+        backgroundPos2 = camera.position.x - camera.viewportWidth/2 + background.getWidth();
         bird = new Bird(50, 300);
         tubes = new Array<Tube>();
         while (tubes.size < TUBE_COUNT) {
@@ -50,6 +53,7 @@ public class PlayState extends State {
         handlInput();
         updateSurface();
         bird.update(dt);
+        updateBackground(dt);
         camera.position.x = bird.getPosition().x + 80;
         for (int i = 0; i < tubes.size; i++) {
             Tube t = tubes.get(i);
@@ -60,6 +64,9 @@ public class PlayState extends State {
                 gsm.set(new GameoverState(gsm));
             }
         }
+        if (bird.getPosition().y < surfacePos1.y + surface.getHeight()) {
+            gsm.set(new GameoverState(gsm));
+        }
         camera.update();
     }
 
@@ -67,7 +74,8 @@ public class PlayState extends State {
     public void render(SpriteBatch sb) {
         sb.setProjectionMatrix(camera.combined);
         sb.begin();
-        sb.draw(background, camera.position.x - camera.viewportWidth/2, 0);
+        sb.draw(background, backgroundPos1, 0);
+        sb.draw(background, backgroundPos2, 0);
         sb.draw(surface, surfacePos1.x, surfacePos1.y);
         sb.draw(surface, surfacePos2.x, surfacePos2.y);
         sb.draw(bird.getBird(), bird.getPosition().x, bird.getPosition().y);
@@ -97,4 +105,17 @@ public class PlayState extends State {
             surfacePos2.add(surface.getWidth()*2, 0);
         }
     }
+
+    private void updateBackground(float dt) {
+        backgroundPos1 += Bird.MOVEMENT*dt/2;
+        backgroundPos2 += Bird.MOVEMENT*dt/2;
+
+        if (camera.position.x - camera.viewportWidth/2 > backgroundPos1 + background.getWidth()) {
+            backgroundPos1 += background.getWidth()*2;
+        }
+        if (camera.position.x - camera.viewportWidth/2 > backgroundPos2 + background.getWidth()) {
+            backgroundPos2 += background.getWidth()*2;
+        }
+    }
+
 }
