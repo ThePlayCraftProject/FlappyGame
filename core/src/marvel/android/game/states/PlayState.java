@@ -2,6 +2,7 @@ package marvel.android.game.states;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
@@ -22,10 +23,13 @@ public class PlayState extends State {
     private Texture background;
     private Texture surface;
     private Vector2 surfacePos1, surfacePos2;
+    private BitmapFont font;
     private float backgroundPos1, backgroundPos2;
 
     public PlayState(GameStateManager gsm) {
         super(gsm);
+        gsm.score = 0;
+        font = new BitmapFont();
         background = new Texture("bg.png");
         surface = new Texture("ground.png");
         surfacePos1 = new Vector2(camera.position.x - camera.viewportWidth/2, GROUND_Y_OFFSET);
@@ -35,7 +39,7 @@ public class PlayState extends State {
         bird = new Bird(50, 300);
         tubes = new Array<Tube>();
         while (tubes.size < TUBE_COUNT) {
-            tubes.add(new Tube((tubes.size+1)*(TUBE_SPACING + Tube.TUBE_WIDTH)));
+            tubes.add(new Tube((tubes.size+1)*(TUBE_SPACING + Tube.TUBE_WIDTH), tubes.size+1));
         }
 
         camera.setToOrtho(false, FlappyGame.WIDTH/2, FlappyGame.HEIGHT/2);
@@ -57,11 +61,22 @@ public class PlayState extends State {
         camera.position.x = bird.getPosition().x + 80;
         for (int i = 0; i < tubes.size; i++) {
             Tube t = tubes.get(i);
-            if (camera.position.x - camera.viewportWidth/2 > t.getPosTubeT().x + t.getTubeT().getWidth()) {
-                t.reposition(t.getPosTubeT().x + (TUBE_SPACING + Tube.TUBE_WIDTH)*TUBE_COUNT);
+
+            if (!t.behind) {
+                if (bird.getPosition().x > t.getPosTubeB().x + t.getTubeB().getWidth()) {
+                    t.behind = true;
+                    gsm.score++;
+                }
+                if (t.collides(bird.getBounds())) {
+                    gsm.set(new GameoverState(gsm));
+                }
             }
-            if (t.collides(bird.getBounds())) {
-                gsm.set(new GameoverState(gsm));
+            else {
+                if (camera.position.x - camera.viewportWidth / 2 > t.getPosTubeT().x + t.getTubeT().getWidth()) {
+                    t.reposition(t.getPosTubeT().x + (TUBE_SPACING + Tube.TUBE_WIDTH) * TUBE_COUNT);
+                    t.id += 4;
+                    t.behind = false;
+                }
             }
         }
         if (bird.getPosition().y < surfacePos1.y + surface.getHeight()) {
@@ -80,14 +95,22 @@ public class PlayState extends State {
         sb.draw(surface, surfacePos2.x, surfacePos2.y);
         sb.draw(bird.getBird(), bird.getPosition().x, bird.getPosition().y);
         for (Tube t : tubes) {
-            sb.draw(t.getTubeB(), t.getPosTubeB().x, t.getPosTubeB().y);
-            sb.draw(t.getTubeT(), t.getPosTubeT().x, t.getPosTubeT().y);
+            if (t.id == gsm.max_score) {
+                sb.draw(t.getTubeBG(), t.getPosTubeB().x, t.getPosTubeB().y);
+                sb.draw(t.getTubeTG(), t.getPosTubeT().x, t.getPosTubeT().y);
+            }
+            else {
+                sb.draw(t.getTubeB(), t.getPosTubeB().x, t.getPosTubeB().y);
+                sb.draw(t.getTubeT(), t.getPosTubeT().x, t.getPosTubeT().y);
+            }
         }
+        font.draw(sb, "SCORE: "+gsm.score, camera.position.x, camera.viewportHeight-5);
         sb.end();
     }
 
     @Override
     public void dispose() {
+        font.dispose();
         bird.dispose();
         for (Tube t : tubes) {
             t.dispose();
@@ -108,7 +131,7 @@ public class PlayState extends State {
 
     private void updateBackground(float dt) {
         backgroundPos1 += Bird.MOVEMENT*dt/2;
-        backgroundPos2 += Bird.MOVEMENT*dt/2;
+        backgroundPos2 = backgroundPos1 - background.getWidth();
 
         if (camera.position.x - camera.viewportWidth/2 > backgroundPos1 + background.getWidth()) {
             backgroundPos1 += background.getWidth()*2;

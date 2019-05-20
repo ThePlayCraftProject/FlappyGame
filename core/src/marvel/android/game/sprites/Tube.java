@@ -14,14 +14,22 @@ public class Tube implements Disposable {
     public static final int LOWEST_OPENNING = 130;
 
     private Texture tubeT, tubeB;
+    private Texture tubeTG, tubeBG;
     private Vector2 posTubeT, posTubeB;
     private Rectangle boundsT, boundsB;
 
+    public int id;
+    public boolean behind;
+
     private Random rand;
 
-    public Tube(float x) {
+    public Tube(float x, int id) {
+        this.id = id;
+        behind = false;
         tubeT = new Texture("toptube.png");
         tubeB = new Texture("bottomtube.png");
+        tubeTG = new Texture("toptubeG.png");
+        tubeBG = new Texture("bottomtubeG.png");
 
         rand = new Random();
 
@@ -54,6 +62,14 @@ public class Tube implements Disposable {
         return tubeB;
     }
 
+    public Texture getTubeTG() {
+        return tubeTG;
+    }
+
+    public Texture getTubeBG() {
+        return tubeBG;
+    }
+
     public Vector2 getPosTubeT() {
         return posTubeT;
     }
@@ -66,5 +82,7 @@ public class Tube implements Disposable {
     public void dispose() {
         tubeT.dispose();
         tubeB.dispose();
+        tubeTG.dispose();
+        tubeBG.dispose();
     }
 }

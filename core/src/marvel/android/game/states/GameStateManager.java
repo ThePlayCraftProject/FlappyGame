@@ -4,11 +4,19 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 import java.util.Stack;
 
+import marvel.android.game.FlappyGame;
+
 public class GameStateManager {
     private Stack<State> states;
+    private FlappyGame fg;
 
-    public GameStateManager() {
+    public int score, max_score;
+
+    public GameStateManager(FlappyGame fg) {
+        max_score = 0;
+        score = 0;
         states = new Stack<State>();
+        this.fg = fg;
     }
 
     public void push(State state) {
@@ -23,6 +31,11 @@ public class GameStateManager {
         states.pop().dispose();
         states.push(state);
     }
+
+    public FlappyGame getFlappyGame() {
+        return fg;
+    }
+
     public void update(float dt) {
         states.peek().update(dt);
     }
